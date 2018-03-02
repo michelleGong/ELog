@@ -130,7 +130,7 @@ public class ClearLogFilesService extends IntentService {
             //遍历各个文件夹
             for(File logfloder : logfolders){
                 logfiles = logfloder.listFiles();
-                android.util.Log.d("*文件夹"+logfloder.getName()+"，日志文件个数:", logfiles.length+"");
+//                android.util.Log.d("*文件夹"+logfloder.getName()+"，日志文件个数:", logfiles.length+"");
 
                 //for debug long time operation----------------
 //            try {
@@ -151,6 +151,7 @@ public class ClearLogFilesService extends IntentService {
                         Log.d(TAG, logfloder.getName()+"最早生成的日志文件，与当前日期的daySpace:"+daySpace+"--最早日志文件日期："+earlyestDateTimeStr+"    current 日期："+currentDateStr);
                     } catch (ParseException e) {
                         // TODO Auto-generated catch block
+                        Log.e(TAG, "删除日志文件解析",e);
                         e.printStackTrace();
                     }
 
@@ -189,8 +190,8 @@ public class ClearLogFilesService extends IntentService {
                 }
             }
 //        ClearLogFilesService.this.stopSelf();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e(TAG, "删除日志文件错误",e);
         }
 
 
