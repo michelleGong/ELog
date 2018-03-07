@@ -1,6 +1,6 @@
 # Yarward日志生成模块
 
-针对WIFI分机程序结构，有多个不同功能应用都要写日志，且不同应用写的日志同一进行管理。 *因此本次日志生成模块，支持多应用共写同一日志文件，日志生成已改为跨进程安全的。**但请注意，若多应用同写一个文件，请在配置时，配置相同的日志文件根目录和文件目录生成器***
+根据项目中遇到的需求，多进程都要写日志，且不同进程的将日志写到一起，进行统一管理。 *因此本次日志生成模块，支持多应用共写同一日志文件，日志生成已改为跨进程安全的。**但请注意，若多应用同写一个文件，请在配置时，配置相同的日志文件根目录和文件目录生成器，且文件名缓存使用统一缓存***
 
 ## 功能介绍
 日志生成模块主要为      
@@ -13,7 +13,7 @@
 7. 日志输出格式，默认日志输出格式为“Log console”日志输出格式。程序结构符合闭合原则，可定义。
 
 ## 快速使用
-本日志生成模块，对外统一由***com.yarward.lib.log***包提供,操作类为==com.yarward.lib.log.Log==类。
+本日志生成模块，对外统一提供Log操作类。
 
 **需要增加权限**
 ```
@@ -124,7 +124,7 @@
 | public static void removeLogFilter(LogFilter filter) | 删除日志过滤器                                  |                                          |
 | public static void clearLogFilters()     | 清空日志过滤器                                  |                                          |
 | public static void setIsDeleteFileWhenStorageLack(boolean isDeleteFileWhenStorageLack) | 设置当磁盘容量不够时，写日志时，是否进行日志删除的操作，删除规则见下文自动删除规则 |                                          |
-
+|  public static void setIsProcessersLog2SameFile(boolean isProcessersLog2SameFile)| 当使用默认路径生成器时，设置进该属性为true，多进程日志文件名使用统一缓存 |                                          |
 
 
 
@@ -211,15 +211,7 @@ Log.deleteLogFiles(2012,12,23);
 Module1的Application类，代码：
 ```
 
-package com.example.testapp1;
 
-import android.app.Application;
-import android.os.Environment;
-
-import com.yarward.lib.log.Log;
-import com.yarward.lib.log.LogFormatter;
-
-import java.io.File;
 
 /**
  * Created by MichelleHong on 2016/11/29 0029.
@@ -241,6 +233,8 @@ public class TestAppApplication extends Application {
         Log.init(sApplication);
         //设置日志文件的根目录
         Log.setLogFileRootDirectory(logFileRootDirectory);
+        //使用公共缓存
+        Log.setIsProcessersLog2SameFile(true);
         //设置是否按日志级别写入不同文件
         Log.setLog2LevelFileEnabled(true);
         //设置日志输出格式
@@ -254,14 +248,7 @@ public class TestAppApplication extends Application {
 
 Module2的Application类，代码如下：
 ```
-package com.example.testapp2;
 
-import android.app.Application;
-import android.os.Environment;
-import com.yarward.lib.log.Log;
-import com.yarward.lib.log.LogFormatter;
-
-import java.io.File;
 
 /**
  * Created by MichelleHong on 2016/11/29 0029.
@@ -280,6 +267,7 @@ public class TestAppApplication extends Application {
         sApplication = this;
         Log.init(sApplication);
         Log.setLogFileRootDirectory(logFileRootDirectory);
+        Log.setIsProcessersLog2SameFile(true);
         Log.setLog2LevelFileEnabled(true);
         Log.setLogFormatter(new LogFormatter.ConsoleFormatterWithPackage(sApplication));
         Log.setGlobalTag("TESTAPP2");

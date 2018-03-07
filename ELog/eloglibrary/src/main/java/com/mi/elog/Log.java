@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
  *          2.d在开启输出日志到文件的前提下，是否将日志级别为debug，info，error的日志单独输出到文件
  *        3.过滤日志输入到控制台及文件
  *        4.日志输出格式暂定默认为eclipse控制台格式
- * @author：Michelle_Hong 
+ * @author：MichelleHong
  * @创建时间：2016-11-28上午8:29:10
  * @see
  */
@@ -63,6 +63,10 @@ public class Log {
      */
     protected static boolean isLog2LevelFileEnabled = false;
 
+    /**
+     * 是否支持多进程写入日志到统一日志文件
+     */
+    private static boolean isProcessersLog2SameFile = false;
     
     private static FilePathGenerator generator_all = null;
 
@@ -104,6 +108,14 @@ public class Log {
 
     }
 
+
+    public static boolean isIsProcessersLog2SameFile() {
+        return isProcessersLog2SameFile;
+    }
+
+    public static void setIsProcessersLog2SameFile(boolean isProcessersLog2SameFile) {
+        Log.isProcessersLog2SameFile = isProcessersLog2SameFile;
+    }
 
     public static String getLogFileRootDirectory(){
        return FilePathGenerator.logDirRoot;
@@ -843,7 +855,12 @@ public class Log {
             public void run() {
                 if (generator_all == null) {
                     //            generator = new FilePathGenerator.DefaultFilePathGenerator("","","");
-                    generator_all = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGINALLFOLDER, "", "");
+                    if(isProcessersLog2SameFile){
+                        generator_all = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGINALLFOLDER, "", "",true);
+                    }else{
+                        generator_all = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGINALLFOLDER, "", "");
+                    }
+
                 }
                 if (formatter == null) {
                     formatter = new LogFormatter.ConsoleFormatter();
@@ -873,19 +890,32 @@ public class Log {
                         switch (level) {
                             case ERROR:
                                 if (generator_error == null) {
-                                    generator_error = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGERRORFOLDER, "", "");
+                                    if(isProcessersLog2SameFile){
+                                        generator_error = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGERRORFOLDER, "", "",true);
+                                    }else{
+                                        generator_error = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGERRORFOLDER, "", "");
+                                    }
+
                                 }
                                 Log2File.log2file(generator_error.getTargetpath(), formatter.format(level, tag, msg, tr));
                                 break;
                             case DEBUG:
                                 if (generator_debug == null) {
-                                    generator_debug = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGDEBUGFOLDER, "", "");
+                                    if (isProcessersLog2SameFile) {
+                                        generator_debug = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGDEBUGFOLDER, "", "",true);
+                                    } else {
+                                        generator_debug = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGDEBUGFOLDER, "", "");
+                                    }
                                 }
                                 Log2File.log2file(generator_debug.getTargetpath(), formatter.format(level, tag, msg, tr));
                                 break;
                             case INFO:
                                 if (generator_info == null) {
-                                    generator_info = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGINFOFOLDER, "", "");
+                                    if(isProcessersLog2SameFile){
+                                        generator_info = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGINFOFOLDER, "", "",true);
+                                    }else{
+                                        generator_info = new FilePathGenerator.DefaultFilePathGenerator(context, "", FilePathGenerator.LOGINFOFOLDER, "", "");
+                                    }
                                 }
                                 Log2File.log2file(generator_info.getTargetpath(), formatter.format(level, tag, msg, tr));
                                 break;

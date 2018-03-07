@@ -5,7 +5,8 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.text.TextUtils;
 
-import com.yarward.lib.log.acache.ACache;
+
+import com.mi.elog.acache.ACache;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -16,7 +17,7 @@ import java.util.Date;
  * 日志文件的生成器
  *
  * @描述：该类根据需求的不同定义各种日志文件的存储策略
- * @author：Michelle_Hong
+ * @author：MichelleHong
  * @see
  */
 public abstract class FilePathGenerator {
@@ -64,7 +65,10 @@ public abstract class FilePathGenerator {
             throw new NullPointerException("while construct FilePathGenerator for wirting log to file,The context should not be null");
         }
 
-        logDirRoot = context.getExternalFilesDir(null).getAbsolutePath() + File.separator + "log";
+        if(TextUtils.isEmpty(logDirRoot)){
+            logDirRoot = context.getExternalFilesDir(null).getAbsolutePath() + File.separator + "log";
+        }
+
 
         if (!TextUtils.isEmpty(fileName_pre)) {
             this.fileName_pre = fileName_pre;
@@ -73,19 +77,28 @@ public abstract class FilePathGenerator {
         if (!TextUtils.isEmpty(suffix)) {
             this.suffix = suffix;
         }
-        File file = new File(cacheDir);
+        File file = getCacheDir(context);
         aCache = ACache.get(file);
     }
 
-
     private FilePathGenerator(Context context, String logDirRoot, String fileName_pre, String suffix) {
-        if (context == null) {
-            throw new NullPointerException("while construct FilePathGenerator for wirting log to file,The context should not be null");
-        }
+
+        this(context,fileName_pre,suffix);
         if (!TextUtils.isEmpty(logDirRoot)) {
             this.logDirRoot = logDirRoot;
         }
 
+    }
+    public FilePathGenerator(Context context, String fileName_pre, String suffix,boolean sharedCache) {
+        if (context == null) {
+            throw new NullPointerException("while construct FilePathGenerator for wirting log to file,The context should not be null");
+        }
+
+        if(TextUtils.isEmpty(logDirRoot)){
+            logDirRoot = context.getExternalFilesDir(null).getAbsolutePath() + File.separator + "log";
+        }
+
+
         if (!TextUtils.isEmpty(fileName_pre)) {
             this.fileName_pre = fileName_pre;
         }
@@ -93,9 +106,26 @@ public abstract class FilePathGenerator {
         if (!TextUtils.isEmpty(suffix)) {
             this.suffix = suffix;
         }
-        File file = new File(cacheDir);
-        aCache = ACache.get(file);
+        if(sharedCache){
+            File file = new File(cacheDir);
+            aCache = ACache.get(file);
+        }else{
+            File file = getCacheDir(context);
+            aCache = ACache.get(file);
+        }
+
     }
+
+    private FilePathGenerator(Context context, String logDirRoot, String fileName_pre, String suffix,boolean sharedCache) {
+
+        this(context,fileName_pre,suffix,sharedCache);
+        if (!TextUtils.isEmpty(logDirRoot)) {
+            this.logDirRoot = logDirRoot;
+        }
+
+    }
+
+
 
 
     public abstract String generateFilePath();
@@ -128,9 +158,6 @@ public abstract class FilePathGenerator {
         SimpleDateFormat sdf = FilePathGenerator.sdf;
 
 
-        public DefaultFilePathGenerator() {
-        }
-
         public DefaultFilePathGenerator(Context context, String fileName_pre, String suffix) {
             super(context, fileName_pre, suffix);
         }
@@ -141,6 +168,20 @@ public abstract class FilePathGenerator {
 
         public DefaultFilePathGenerator(Context context, String logDirRoot, String logFolder, String fileName_pre, String suffix) {
             super(context, logDirRoot, fileName_pre, suffix);
+            this.logFolder = logFolder;
+        }
+
+
+        public DefaultFilePathGenerator(Context context, String fileName_pre, String suffix,boolean sharedCache) {
+            super(context, fileName_pre, suffix,sharedCache);
+        }
+
+        public DefaultFilePathGenerator(Context context, String logDirRoot, String fileName_pre, String suffix,boolean sharedCache) {
+            super(context, logDirRoot, fileName_pre, suffix,sharedCache);
+        }
+
+        public DefaultFilePathGenerator(Context context, String logDirRoot, String logFolder, String fileName_pre, String suffix,boolean sharedCache) {
+            super(context, logDirRoot, fileName_pre, suffix,sharedCache);
             this.logFolder = logFolder;
         }
 
@@ -338,4 +379,14 @@ public abstract class FilePathGenerator {
         return Integer.parseInt(String.valueOf(between_days));
     }
 
+    public static File getCacheDir(Context context){
+        String cachePath;
+        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
+                || !Environment.isExternalStorageRemovable()){
+            cachePath = context.getExternalCacheDir().getPath();
+        }else{
+            cachePath = context.getCacheDir().getPath();
+        }
+        return new File(cachePath + File.separator + "ylogcache"+File.separator);
+    }
 }
